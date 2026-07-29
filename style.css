@@ -1,101 +1,298 @@
-body{
-
-    margin:0;
-
-    height:100vh;
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    background:#111;
-
-    font-family:
-    Arial,
-    sans-serif;
-
-    color:white;
-
+:root {
+    --primary-red: #e74c3c;
+    --active-green: #2ecc71;
+    --dark-bg: #121212;
+    --panel-black: #111;
+    --border-gray: #444;
+    --text-gray: #888;
 }
 
-
-
-.player{
-
-    width:400px;
-
-    padding:30px;
-
-    border-radius:20px;
-
-    background:#222;
-
-    box-shadow:
-    0 0 30px #000;
-
-    text-align:center;
-
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Courier New', Courier, monospace;
 }
 
-
-
-#songName{
-
-    margin:20px;
-
-    font-size:18px;
-
+html, body {
+    overflow: hidden;
+    height: 100%;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
+html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+a { text-decoration: none; }
 
-
-input[type="range"]{
-
-    width:100%;
-
+body {
+    background-color: var(--dark-bg);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 100px 20px 0;
 }
 
-
-
-.controls button{
-
-    margin:15px;
-
-    width:50px;
-
-    height:40px;
-
-    font-size:20px;
-
-    cursor:pointer;
-
+/* 随身听外壳 */
+.cassette-player {
+    background: linear-gradient(145deg, #2b2b2b, #1e1e1e);
+    border: 5px solid var(--border-gray);
+    border-radius: 16px;
+    width: 720px;
+    padding: 22px 26px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+    color: #ccc;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
-
-
-li{
-
-    list-style:none;
-
-    padding:10px;
-
-    cursor:pointer;
-
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--text-gray);
+    border-bottom: 2px solid #333;
+    padding-bottom: 6px;
 }
 
-
-
-li:hover{
-
-    background:#333;
-
+/* Logo 和文字彩虹动画 */
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--primary-red);
+    letter-spacing: 1.5px;
 }
 
+.brand-logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 4px;
+}
 
-.active{
+.brand.playing-glow .brand-text {
+    background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff, #ff0000);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow-glow 6s linear infinite;
+}
 
-    color:#00ff99;
+@keyframes rainbow-glow {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
 
+.model { cursor: pointer; transition: color 0.2s; }
+.model:hover { color: #fff; }
+
+/* 磁带视窗 */
+.player-body { display: flex; flex-direction: column; gap: 12px; }
+
+.cassette-window {
+    background-color: var(--panel-black);
+    border: 4px solid #333;
+    border-radius: 10px;
+    height: 180px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cassette {
+    width: 460px;
+    height: 145px;
+    background-color: #d35400;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 32px;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6);
+}
+
+.tape-reel {
+    width: 82px;
+    height: 82px;
+    background: radial-gradient(circle, #fff 18%, #111 19%, #111 38%, #fff 39%, #fff 48%, #222 49%);
+    border-radius: 50%;
+    border: 3px solid #555;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.tape-reel::after, .tape-reel::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background: #444;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 1px var(--panel-black);
+}
+.tape-reel::after { width: 100%; height: 6px; }
+.tape-reel::before { width: 6px; height: 100%; }
+
+.spinning { animation: spin 2s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.tape-center-window {
+    background-color: #222;
+    width: 160px;
+    height: 48px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid var(--border-gray);
+    overflow: hidden;
+}
+
+.tape-label-container { width: 100%; overflow: hidden; display: flex; justify-content: center; }
+
+.tape-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #f1c40f;
+    white-space: nowrap;
+    display: inline-block;
+    padding: 0 8px;
+}
+
+.marquee {
+    padding-left: 100%;
+    animation: marquee-scroll 8s linear infinite;
+}
+@keyframes marquee-scroll { 100% { transform: translate(-100%, 0); } }
+
+/* 进度条与控制器 */
+.progress-section { display: flex; align-items: center; gap: 12px; }
+
+.progress-section input[type="range"] {
+    flex: 1;
+    height: 7px;
+    background: var(--panel-black);
+    border-radius: 4px;
+    outline: none;
+    accent-color: var(--active-green);
+    cursor: pointer;
+}
+
+.time-display {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--active-green);
+    white-space: nowrap;
+    min-width: 100px;
+    text-align: right;
+}
+
+.controls-panel { display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+.controls { display: flex; gap: 10px; flex: 1.5; }
+
+.btn.icon-btn {
+    background: linear-gradient(to bottom, #555, #333);
+    border: 1px solid #222;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 var(--panel-black);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    height: 42px; /* 增加高度以更好匹配放大的图标 */
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+/* 放大 播放、暂停、上一首、下一首 图标 */
+.btn.icon-btn svg { width: 24px; height: 24px; fill: #fff; pointer-events: none; }
+
+.btn.icon-btn:active, .btn.icon-btn.active {
+    box-shadow: 0 1px 0 var(--panel-black);
+    transform: translateY(2px);
+    background: linear-gradient(to bottom, var(--primary-red), #c0392b);
+}
+
+.volume-container { display: flex; align-items: center; gap: 10px; flex: 1; }
+.vol-btn { background: none; border: none; cursor: pointer; display: flex; }
+
+/* 放大 音量/静音 图标 */
+.vol-btn svg { width: 26px; height: 26px; fill: var(--text-gray); transition: fill 0.2s; pointer-events: none; }
+.vol-btn:hover svg { fill: var(--primary-red); }
+
+.volume-container input { width: 100%; height: 6px; accent-color: var(--primary-red); cursor: pointer; }
+
+/* 歌单列表 */
+.playlist-section {
+    border-top: 1px dashed var(--border-gray);
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.playlist-header { display: flex; align-items: center; gap: 10px; }
+.playlist-title { font-size: 11px; color: var(--text-gray); }
+
+.add-row-btn, .delete-row-btn {
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+}
+
+.add-row-btn { background-color: #27ae60; width: 24px; height: 24px; font-size: 16px; }
+.add-row-btn:hover { background-color: #219150; }
+
+.delete-row-btn { background-color: #c0392b; width: 24px; height: 24px; font-size: 14px; }
+.delete-row-btn:hover { background-color: var(--primary-red); }
+
+.track-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 252px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.track-list::-webkit-scrollbar { width: 6px; }
+.track-list::-webkit-scrollbar-track { background: #151515; border-radius: 4px; }
+.track-list::-webkit-scrollbar-thumb { background: var(--border-gray); border-radius: 4px; }
+
+.track-row { display: flex; gap: 8px; align-items: center; }
+.track-row.fade-in { animation: fadeInRow 0.35s ease-out forwards; }
+
+@keyframes fadeInRow {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.track-row input {
+    background-color: var(--panel-black);
+    border: 1px solid var(--border-gray);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    user-select: text !important;
+}
+
+.track-row input:focus { outline: none; border-color: var(--primary-red); }
+.input-title { flex: 1; }
+.input-url { flex: 2; }
+
+.track-row.active-track input {
+    border-color: var(--active-green);
+    background-color: #183318;
 }
