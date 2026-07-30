@@ -1,33 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 获取核心 DOM 节点
+    /* ==========================
+       1. 获取页面中的核心 DOM 节点
+       ========================== */
     const audio = document.getElementById('audioPlayer');
     const playPauseBtn = document.getElementById('playPauseBtn');
-    const iconPlay = playPauseBtn.querySelector('.icon-play');
-    const iconPause = playPauseBtn.querySelector('.icon-pause');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
-    
     const muteBtn = document.getElementById('muteBtn');
-    const iconVolOn = muteBtn.querySelector('.icon-vol-on');
-    const iconVolMute = muteBtn.querySelector('.icon-vol-mute');
     const volumeSlider = document.getElementById('volumeSlider');
     const progressBar = document.getElementById('progressBar');
     const timeDisplay = document.getElementById('timeDisplay');
-    
     const leftReel = document.getElementById('leftReel');
     const rightReel = document.getElementById('rightReel');
     const tapeLabel = document.getElementById('tapeLabel');
     const bgmGenBtn = document.getElementById('bgmGenBtn');
     const brandLogoText = document.getElementById('brandLogoText');
-    
     const trackList = document.getElementById('trackList');
     const addFieldsBtn = document.getElementById('addFieldsBtn');
+
+    const iconPlay = playPauseBtn.querySelector('.icon-play');
+    const iconPause = playPauseBtn.querySelector('.icon-pause');
+    const iconVolOn = muteBtn.querySelector('.icon-vol-on');
+    const iconVolMute = muteBtn.querySelector('.icon-vol-mute');
 
     const BASE_URL = 'https://fishol.github.io/music-link/';
     let currentActiveRow = null;
     let lastVolume = 0.8;
 
-    // 工具函数：秒转 MM:SS 格式
+    const updateProgressVisual = value => {
+        const percent = Math.max(0, Math.min(100, value));
+        progressBar.style.setProperty('--progress', `${percent}%`);
+        progressBar.value = percent;
+    };
+
+    /* ==========================
+       2. 通用工具函数
+       ========================== */
     const formatTime = seconds => {
         if (isNaN(seconds) || seconds < 0) return '00:00';
         const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -35,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${mins}:${secs}`;
     };
 
-    // 设置播放/暂停 UI 状态
     function setPlayState(isPlaying) {
         leftReel.classList.toggle('spinning', isPlaying);
         rightReel.classList.toggle('spinning', isPlaying);
@@ -45,16 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
         brandLogoText.classList.toggle('playing-glow', isPlaying);
     }
 
-    audio.addEventListener('play', () => setPlayState(true));
-    audio.addEventListener('pause', () => setPlayState(false));
-
     function setMuteState(isMuted) {
         audio.muted = isMuted;
         iconVolOn.style.display = isMuted ? 'none' : 'block';
         iconVolMute.style.display = isMuted ? 'block' : 'none';
     }
 
-    // 更新列表行的数字序号
     function updateIndexes() {
         const rows = trackList.querySelectorAll('.track-row');
         rows.forEach((row, idx) => {
@@ -63,28 +66,73 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 初始化 5 首曲目（前两首填入初始值，后三首空槽等待填入）
-    const initialTracks = [
-        'Canon.mp3',
-        'The Ardent Sky.m4a',
-        '',
-        '',
-        ''
-    ];
+    function updateTapeLabel(text) {
+        tapeLabel.textContent = text;
+        tapeLabel.classList.toggle('marquee', tapeLabel.scrollWidth > 140);
+    }
+
+    function setActiveRow(row) {
+        if (currentActiveRow) currentActiveRow.classList.remove('active-track');
+        currentActiveRow = row;
+        if (currentActiveRow) currentActiveRow.classList.add('active-track');
+    }
+
+    function resetPlaybackUI() {
+        audio.pause();
+        audio.src = '';
+        updateTapeLabel('Nothing');
+        timeDisplay.textContent = '00:00 / 00:00';
+    }
+
+    function syncTitleToUrl(titleInput, urlInput) {
+        const val = titleInput.value.trim();
+        urlInput.value = val ? (/^https?:\/\//i.test(val) ? val : BASE_URL + val) : BASE_URL;
+    }
+
+    function getTrackInfo(row) {
+        // 统一读取当前行的标题和链接，减少重复查询 DOM 的代码。
+        const titleInput = row.querySelector('.input-title');
+        const urlInput = row.querySelector('.input-url');
+        return {
+            titleInput,
+            urlInput,
+            title: titleInput.value.trim(),
+            url: urlInput.value.trim()
+        };
+    }
+
+    function playTrackRow(targetRow) {
+        // 选中行后直接加载并播放，避免重复编写相同的播放逻辑。
+        const { title, url } = getTrackInfo(targetRow);
+        if (!url) {
+            alert('Please enter a valid external audio link first.');
+            return false;
+        }
+
+        setActiveRow(targetRow);
+        loadAndPlaySong(title, url);
+        return true;
+    }
+
+    /* ==========================
+       3. 初始化初始曲目列表
+       ========================== */
+    const initialTracks = ['Canon.mp3', 'The Ardent Sky.m4a', '', '', ''];
 
     initialTracks.forEach(title => {
-        const url = title ? BASE_URL + title : BASE_URL;
+        const url = title ? `${BASE_URL}${title}` : BASE_URL;
         createTrackRow(title, url, false);
     });
 
+    /* ==========================
+       4. 事件绑定与播放器行为
+       ========================== */
     bgmGenBtn.addEventListener('click', () => alert('F I S H O L'));
 
-    // 点击 + 按钮添加一行（无限制添加）
     addFieldsBtn.addEventListener('click', () => {
         createTrackRow('', BASE_URL, true);
     });
 
-    // 创建新行元素
     function createTrackRow(title = '', url = BASE_URL, animate = false) {
         const row = document.createElement('div');
         row.className = `track-row${animate ? ' fade-in' : ''}`;
@@ -101,24 +149,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const deleteBtn = row.querySelector('.delete-row-btn');
 
         titleInput.addEventListener('input', () => {
-            const val = titleInput.value.trim();
-            urlInput.value = val ? (/^https?:\/\//i.test(val) ? val : BASE_URL + val) : BASE_URL;
+            syncTitleToUrl(titleInput, urlInput);
             setActiveRow(row);
         });
 
         deleteBtn.addEventListener('click', () => {
-            if (trackList.querySelectorAll('.track-row').length <= 1) {
+            const totalRows = trackList.querySelectorAll('.track-row').length;
+            if (totalRows <= 1) {
                 alert('The last song cannot be deleted.');
                 return;
             }
 
             if (row === currentActiveRow) {
-                audio.pause();
-                audio.src = '';
-                updateTapeLabel('Nothing');
-                timeDisplay.textContent = '00:00 / 00:00';
+                resetPlaybackUI();
                 currentActiveRow = null;
             }
+
             row.style.opacity = '0';
             setTimeout(() => {
                 row.remove();
@@ -138,54 +184,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function updateTapeLabel(text) {
-        tapeLabel.textContent = text;
-        tapeLabel.classList.toggle('marquee', tapeLabel.scrollWidth > 140);
-    }
-
-    function setActiveRow(row) {
-        if (currentActiveRow) currentActiveRow.classList.remove('active-track');
-        currentActiveRow = row;
-        if (currentActiveRow) currentActiveRow.classList.add('active-track');
-    }
-
     function loadAndPlaySong(title, url) {
         updateTapeLabel(title);
         audio.src = url;
         audio.load();
         audio.play().catch(err => {
-            console.error("Playback failed:", err);
+            console.error('Playback failed:', err);
             updateTapeLabel('Loading failed');
         });
     }
 
-    // 播放 / 暂停 逻辑
+    function playCurrentTrack() {
+        // 优先使用当前激活行；若没有则使用第一行作为默认播放目标。
+        const targetRow = currentActiveRow || trackList.querySelector('.track-row');
+        if (!targetRow) return;
+
+        const { url } = getTrackInfo(targetRow);
+        if (!url) {
+            alert('Please enter a valid external audio link first.');
+            return;
+        }
+
+        if (audio.src !== url) {
+            playTrackRow(targetRow);
+            return;
+        }
+
+        audio.play().catch(console.error);
+    }
+
     playPauseBtn.addEventListener('click', () => {
         if (audio.paused) {
-            const targetRow = currentActiveRow || trackList.querySelector('.track-row');
-            if (targetRow) {
-                const title = targetRow.querySelector('.input-title').value.trim() || 'Untitled';
-                const url = targetRow.querySelector('.input-url').value.trim();
-                
-                if (audio.src !== url) {
-                    setActiveRow(targetRow);
-                    loadAndPlaySong(title, url);
-                    return;
-                }
-            }
-
-            if (!audio.src) {
-                alert('Please enter a valid external audio link first.');
-                return;
-            }
-
-            audio.play().catch(console.error);
+            playCurrentTrack();
         } else {
             audio.pause();
         }
     });
 
-    // 静音逻辑
     muteBtn.addEventListener('click', () => {
         const isMutedNow = !(audio.muted || audio.volume === 0);
         if (isMutedNow) {
@@ -206,29 +241,31 @@ document.addEventListener('DOMContentLoaded', () => {
         setMuteState(val === 0);
     });
 
-    // 上一首 / 下一首
     const switchTrack = isNext => {
+        // 通过统一的播放入口实现上一首/下一首逻辑，减少重复分支。
         const rows = Array.from(trackList.querySelectorAll('.track-row'));
         if (!rows.length) return;
+
         let index = rows.indexOf(currentActiveRow);
-        index = isNext ? (index < rows.length - 1 ? index + 1 : 0) : (index > 0 ? index - 1 : rows.length - 1);
-        
+        index = isNext
+            ? (index < rows.length - 1 ? index + 1 : 0)
+            : (index > 0 ? index - 1 : rows.length - 1);
+
         const targetRow = rows[index];
-        const title = targetRow.querySelector('.input-title').value.trim() || 'Untitled';
-        const url = targetRow.querySelector('.input-url').value.trim();
-        if (url) {
-            setActiveRow(targetRow);
-            loadAndPlaySong(title, url);
-        }
+        playTrackRow(targetRow);
     };
 
     prevBtn.addEventListener('click', () => switchTrack(false));
     nextBtn.addEventListener('click', () => switchTrack(true));
 
-    // 时间更新与进度条
+    audio.addEventListener('play', () => setPlayState(true));
+    audio.addEventListener('pause', () => setPlayState(false));
+
+    updateProgressVisual(0);
+
     audio.addEventListener('timeupdate', () => {
         if (audio.duration) {
-            progressBar.value = (audio.currentTime / audio.duration) * 100;
+            updateProgressVisual((audio.currentTime / audio.duration) * 100);
             timeDisplay.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
         }
     });
@@ -240,7 +277,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     progressBar.addEventListener('input', e => {
-        if (audio.duration) audio.currentTime = (e.target.value / 100) * audio.duration;
+        const percent = parseFloat(e.target.value);
+        updateProgressVisual(percent);
+        if (audio.duration) audio.currentTime = (percent / 100) * audio.duration;
     });
 
     audio.addEventListener('ended', () => {
