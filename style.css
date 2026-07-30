@@ -226,7 +226,7 @@ body {
 @keyframes marquee-scroll { 100% { transform: translate(-100%, 0); } }
 
 /* 进度条与控制器 */
-.progress-section { display: flex; align-items: center; gap: 12px; }
+.progress-section { display: flex; align-items: center; gap: 8px; }
 
 .progress-section input[type="range"] {
     flex: 1;
@@ -236,8 +236,9 @@ body {
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
-    background: linear-gradient(90deg, var(--primary-blue) 0 var(--progress, 0%), var(--panel-black) var(--progress, 0%) 100%);
-    margin: 0 40px;      /* 进度条追着魚儿跑 */
+    background: linear-gradient(90deg, transparent 0 var(--progress, 0%), rgba(255, 255, 255, 0.16) var(--progress, 0%) 100%);
+    background-color: rgba(255, 255, 255, 0.12);
+    margin: 0 4px 0 8px;
 }
 
 .progress-section input[type="range"]::-webkit-slider-thumb {

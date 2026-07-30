@@ -52,6 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
         brandLogoText.classList.toggle('playing-glow', isPlaying);
     }
 
+    function clearPlaybackState() {
+        setPlayState(false);
+        updateTapeLabel('Nothing');
+        timeDisplay.textContent = '00:00 / 00:00';
+    }
+
     function setMuteState(isMuted) {
         audio.muted = isMuted;
         iconVolOn.style.display = isMuted ? 'none' : 'block';
@@ -80,13 +86,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetPlaybackUI() {
         audio.pause();
         audio.src = '';
-        updateTapeLabel('Nothing');
-        timeDisplay.textContent = '00:00 / 00:00';
+        clearPlaybackState();
     }
 
     function syncTitleToUrl(titleInput, urlInput) {
         const val = titleInput.value.trim();
-        urlInput.value = val ? (/^https?:\/\//i.test(val) ? val : BASE_URL + val) : BASE_URL;
+        if (!val) {
+            urlInput.value = '';
+            return;
+        }
+
+        urlInput.value = /^https?:\/\//i.test(val) ? val : BASE_URL + val;
     }
 
     function getTrackInfo(row) {
@@ -101,11 +111,33 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    function isPlayableRow(row) {
+        const { url } = getTrackInfo(row);
+        return Boolean(url);
+    }
+
+    function isEmptyRow(row) {
+        const { title, url } = getTrackInfo(row);
+        return !title && !url;
+    }
+
+    function removeEmptyRows() {
+        const rows = Array.from(trackList.querySelectorAll('.track-row'));
+        rows.forEach(row => {
+            if (isEmptyRow(row)) {
+                row.remove();
+            }
+        });
+        updateIndexes();
+    }
+
     function playTrackRow(targetRow) {
         // 选中行后直接加载并播放，避免重复编写相同的播放逻辑。
         const { title, url } = getTrackInfo(targetRow);
         if (!url) {
-            alert('Please enter a valid external audio link first.');
+            setActiveRow(targetRow);
+            audio.pause();
+            updateTapeLabel('Nothing');
             return false;
         }
 
@@ -120,9 +152,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const initialTracks = ['Canon.mp3', 'The Ardent Sky.m4a', '', '', ''];
 
     initialTracks.forEach(title => {
-        const url = title ? `${BASE_URL}${title}` : BASE_URL;
-        createTrackRow(title, url, false);
+        if (title) {
+            createTrackRow(title, `${BASE_URL}${title}`, false);
+        } else {
+            createTrackRow('', '', false);
+        }
     });
+
+    removeEmptyRows();
 
     /* ==========================
        4. 事件绑定与播放器行为
@@ -130,10 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
     bgmGenBtn.addEventListener('click', () => alert('F I S H O L'));
 
     addFieldsBtn.addEventListener('click', () => {
-        createTrackRow('', BASE_URL, true);
+        createTrackRow('', '', true);
     });
 
-    function createTrackRow(title = '', url = BASE_URL, animate = false) {
+    function createTrackRow(title = '', url = '', animate = false) {
         const row = document.createElement('div');
         row.className = `track-row${animate ? ' fade-in' : ''}`;
 
@@ -152,6 +189,16 @@ document.addEventListener('DOMContentLoaded', () => {
             syncTitleToUrl(titleInput, urlInput);
             setActiveRow(row);
         });
+
+        const removeIfEmpty = () => {
+            if (isEmptyRow(row)) {
+                row.remove();
+                updateIndexes();
+            }
+        };
+
+        titleInput.addEventListener('blur', removeIfEmpty);
+        urlInput.addEventListener('blur', removeIfEmpty);
 
         deleteBtn.addEventListener('click', () => {
             const totalRows = trackList.querySelectorAll('.track-row').length;
@@ -190,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         audio.load();
         audio.play().catch(err => {
             console.error('Playback failed:', err);
+            clearPlaybackState();
             updateTapeLabel('Loading failed');
         });
     }
@@ -197,13 +245,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function playCurrentTrack() {
         // 优先使用当前激活行；若没有则使用第一行作为默认播放目标。
         const targetRow = currentActiveRow || trackList.querySelector('.track-row');
-        if (!targetRow) return;
+        if (!targetRow || !isPlayableRow(targetRow)) return;
 
         const { url } = getTrackInfo(targetRow);
-        if (!url) {
-            alert('Please enter a valid external audio link first.');
-            return;
-        }
+        if (!url) return;
 
         if (audio.src !== url) {
             playTrackRow(targetRow);
@@ -242,17 +287,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const switchTrack = isNext => {
-        // 通过统一的播放入口实现上一首/下一首逻辑，减少重复分支。
+        removeEmptyRows();
         const rows = Array.from(trackList.querySelectorAll('.track-row'));
         if (!rows.length) return;
 
-        let index = rows.indexOf(currentActiveRow);
-        index = isNext
-            ? (index < rows.length - 1 ? index + 1 : 0)
-            : (index > 0 ? index - 1 : rows.length - 1);
+        const playableRows = rows.filter(isPlayableRow);
+        if (!playableRows.length) {
+            audio.pause();
+            clearPlaybackState();
+            return;
+        }
 
-        const targetRow = rows[index];
-        playTrackRow(targetRow);
+        const currentIndex = rows.indexOf(currentActiveRow);
+        const currentPlayableIndex = playableRows.indexOf(currentActiveRow);
+        const startIndex = currentPlayableIndex >= 0 ? currentPlayableIndex : -1;
+
+        let targetRow = null;
+        if (startIndex >= 0) {
+            const nextPlayableIndex = isNext
+                ? (startIndex + 1) % playableRows.length
+                : (startIndex - 1 + playableRows.length) % playableRows.length;
+            targetRow = playableRows[nextPlayableIndex];
+        } else {
+            targetRow = playableRows[isNext ? 0 : playableRows.length - 1];
+        }
+
+        const { url, title } = getTrackInfo(targetRow);
+        if (!url) return;
+
+        const isSameTrack = audio.src === url && !audio.paused;
+        setActiveRow(targetRow);
+
+        if (isSameTrack) {
+            audio.pause();
+            updateTapeLabel(title || 'Nothing');
+            return;
+        }
+
+        loadAndPlaySong(title, url);
     };
 
     prevBtn.addEventListener('click', () => switchTrack(false));
