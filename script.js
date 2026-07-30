@@ -92,8 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
         row.innerHTML = `
             <span class="track-index"></span>
             <input type="text" class="input-title" placeholder="Glory to Hong Kong.mp3" value="${title}">
-            <input type="text" class="input-url" placeholder="音频直链 URL" value="${url || BASE_URL}">
-            <button class="delete-row-btn" title="删除此栏">×</button>
+            <input type="text" class="input-url" placeholder="Audio Direct Link URL" value="${url || BASE_URL}">
+            <button class="delete-row-btn" title="Delete input field">×</button>
         `;
 
         const titleInput = row.querySelector('.input-title');
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (row === currentActiveRow) {
                 audio.pause();
                 audio.src = '';
-                updateTapeLabel('无磁带');
+                updateTapeLabel('Nothing');
                 timeDisplay.textContent = '00:00 / 00:00';
                 currentActiveRow = null;
             }
@@ -154,8 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
         audio.src = url;
         audio.load();
         audio.play().catch(err => {
-            console.error("播放失败:", err);
-            updateTapeLabel('加载失败');
+            console.error("Playback failed:", err);
+            updateTapeLabel('Loading failed');
         });
     }
 
@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (audio.paused) {
             const targetRow = currentActiveRow || trackList.querySelector('.track-row');
             if (targetRow) {
-                const title = targetRow.querySelector('.input-title').value.trim() || '未命名磁带';
+                const title = targetRow.querySelector('.input-title').value.trim() || 'Untitled';
                 const url = targetRow.querySelector('.input-url').value.trim();
                 
                 if (audio.src !== url) {
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (!audio.src) {
-                alert('请先输入有效的音频外链！');
+                alert('Please enter a valid external audio link first!');
                 return;
             }
 
@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
         index = isNext ? (index < rows.length - 1 ? index + 1 : 0) : (index > 0 ? index - 1 : rows.length - 1);
         
         const targetRow = rows[index];
-        const title = targetRow.querySelector('.input-title').value.trim() || '未命名磁带';
+        const title = targetRow.querySelector('.input-title').value.trim() || 'Untitled';
         const url = targetRow.querySelector('.input-url').value.trim();
         if (url) {
             setActiveRow(targetRow);
