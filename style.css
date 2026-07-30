@@ -69,7 +69,7 @@ body {
     width: 720px;
     max-width: 95vw;
     padding: 22px 26px;
-    opacity: 0.7;
+    opacity: 0.6;          /* 0.0 = 全透明 */
     transition: opacity 0.2s ease;
     margin-top: 100px;
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.1);
@@ -80,7 +80,7 @@ body {
 }
 
 .cassette-player:hover {
-    opacity: 0.9;
+    opacity: 0.9;         /* 0.0 = 全透明 */
 }
 
 .player-header {
@@ -237,7 +237,7 @@ body {
     appearance: none;
     -webkit-appearance: none;
     background: linear-gradient(90deg, var(--primary-blue) 0 var(--progress, 0%), var(--panel-black) var(--progress, 0%) 100%);
-    margin: 0 40px;
+    margin: 0 40px;      /* 进度条追着魚儿跑 */
 }
 
 .progress-section input[type="range"]::-webkit-slider-thumb {
