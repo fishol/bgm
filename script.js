@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         createTrackRow(title, url, false);
     });
 
-    bgmGenBtn.addEventListener('click', () => alert('生成背景音乐外链功能提示框'));
+    bgmGenBtn.addEventListener('click', () => alert('F I S H O L'));
 
     // 点击 + 按钮添加一行（无限制添加）
     addFieldsBtn.addEventListener('click', () => {
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         deleteBtn.addEventListener('click', () => {
             if (trackList.querySelectorAll('.track-row').length <= 1) {
-                alert('播放列表只剩一首歌曲，无法删除！');
+                alert('The last song cannot be deleted.');
                 return;
             }
 
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (!audio.src) {
-                alert('Please enter a valid external audio link first!');
+                alert('Please enter a valid external audio link first.');
                 return;
             }
 
