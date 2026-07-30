@@ -81,13 +81,6 @@ body {
     letter-spacing: 1.5px;
 }
 
-.brand-logo {
-    width: 36px;
-    height: 36px;
-    object-fit: contain;
-    border-radius: 4px;
-}
-
 .brand.playing-glow .brand-text {
     background: linear-gradient(90deg, #16adf8, #00e5ff, #3b82f6, #8b5cf6, #16adf8);
     background-size: 200% auto;
