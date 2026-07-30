@@ -1,10 +1,11 @@
 :root {
-    --primary-red: #e74c3c;
-    --active-green: #2ecc71;
-    --dark-bg: #121212;
-    --panel-black: #111;
-    --border-gray: #444;
-    --text-gray: #888;
+    --primary-blue: #16adf8;      /* 品牌主色 */
+    --primary-hover: #0294e0;     /* 悬浮强调色 */
+    --active-cyan: #00e5ff;       /* 激活高亮色 */
+    --dark-bg: #0f172a;           /* 深色背景 */
+    --panel-black: #111827;       /* 面板背景 */
+    --border-gray: #334155;       /* 边框灰 */
+    --text-gray: #94a3b8;         /* 文字灰 */
 }
 
 * {
@@ -12,11 +13,13 @@
     margin: 0;
     padding: 0;
     font-family: 'Courier New', Courier, monospace;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
-    overflow: hidden;
-    height: 100%;
+    width: 100%;
+    min-height: 100vh;
+    background-color: var(--dark-bg);
     -ms-overflow-style: none;
     scrollbar-width: none;
     -webkit-user-select: none;
@@ -26,24 +29,34 @@ html, body {
 html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 a { text-decoration: none; }
 
+/* 页面顶级布局：绝对靠顶布局，彻底阻断向下伸展对顶部的反作用 */
 body {
-    background-color: var(--dark-bg);
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    min-height: 100vh;
-    padding: 100px 20px 0;
 }
 
-/* 随身听外壳 */
+.viewport-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+/* 随身听外壳：固定距顶 40px，绝对防抖 */
 .cassette-player {
-    background: linear-gradient(145deg, #2b2b2b, #1e1e1e);
+    background: linear-gradient(145deg, #1e293b, #0f172a);
     border: 5px solid var(--border-gray);
     border-radius: 16px;
     width: 720px;
+    max-width: 95vw;
     padding: 22px 26px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.2);
-    color: #ccc;
+    
+    /* 核心修改：固定上方边距 40px，完全移除会导致渲染位移抖动的 transform */
+    margin-top: 100px; 
+    
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -56,16 +69,15 @@ body {
     font-size: 13px;
     font-weight: bold;
     color: var(--text-gray);
-    border-bottom: 2px solid #333;
+    border-bottom: 2px solid #1e293b;
     padding-bottom: 6px;
 }
 
-/* Logo 和文字彩虹动画 */
 .brand {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: var(--primary-red);
+    color: var(--primary-blue);
     letter-spacing: 1.5px;
 }
 
@@ -77,11 +89,11 @@ body {
 }
 
 .brand.playing-glow .brand-text {
-    background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff, #ff0000);
+    background: linear-gradient(90deg, #16adf8, #00e5ff, #3b82f6, #8b5cf6, #16adf8);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: rainbow-glow 6s linear infinite;
+    animation: rainbow-glow 4s linear infinite;
 }
 
 @keyframes rainbow-glow {
@@ -89,15 +101,20 @@ body {
     100% { background-position: 200% center; }
 }
 
-.model { cursor: pointer; transition: color 0.2s; }
-.model:hover { color: #fff; }
+.model {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.model:hover {
+    color: var(--primary-blue);
+}
 
 /* 磁带视窗 */
 .player-body { display: flex; flex-direction: column; gap: 12px; }
 
 .cassette-window {
     background-color: var(--panel-black);
-    border: 4px solid #333;
+    border: 4px solid #1e293b;
     border-radius: 10px;
     height: 180px;
     display: flex;
@@ -105,45 +122,66 @@ body {
     align-items: center;
 }
 
+/* 磁带主体：蓝黑科技发光渐变 */
 .cassette {
     width: 460px;
     height: 145px;
-    background-color: #d35400;
+    background: linear-gradient(135deg, #0284c7 0%, #091026 50%, #0284c7 100%);
+    border: 1px solid var(--primary-blue);
     border-radius: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 32px;
-    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6);
+    box-shadow: 
+        inset 0 0 18px rgba(14, 165, 233, 0.4), 
+        0 0 20px rgba(14, 165, 233, 0.35),
+        0 6px 16px rgba(0, 0, 0, 0.7);
 }
 
 .tape-reel {
     width: 82px;
     height: 82px;
-    background: radial-gradient(circle, #fff 18%, #111 19%, #111 38%, #fff 39%, #fff 48%, #222 49%);
+    background: #0f172a;
+    border: 4px solid #334155;
     border-radius: 50%;
-    border: 3px solid #555;
     position: relative;
     flex-shrink: 0;
+    box-shadow: 0 0 0 3px #1e293b, inset 0 0 8px rgba(0, 0, 0, 0.9);
 }
 
-.tape-reel::after, .tape-reel::before {
+.tape-reel::before {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
-    background: #444;
+    width: 42px;
+    height: 42px;
+    background: #f8fafc;
+    border-radius: 50%;
     transform: translate(-50%, -50%);
-    box-shadow: 0 0 0 1px var(--panel-black);
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.6);
 }
-.tape-reel::after { width: 100%; height: 6px; }
-.tape-reel::before { width: 6px; height: 100%; }
 
-.spinning { animation: spin 2s linear infinite; }
+.tape-reel::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    background: #0f172a;
+    transform: translate(-50%, -50%);
+    clip-path: polygon(
+        30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%
+    );
+}
+
+.spinning { animation: spin 2.5s linear infinite; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
 .tape-center-window {
-    background-color: #222;
+    background-color: #0f172a;
     width: 160px;
     height: 48px;
     border-radius: 6px;
@@ -159,7 +197,7 @@ body {
 .tape-label {
     font-size: 13px;
     font-weight: bold;
-    color: #f1c40f;
+    color: var(--active-cyan);
     white-space: nowrap;
     display: inline-block;
     padding: 0 8px;
@@ -180,14 +218,14 @@ body {
     background: var(--panel-black);
     border-radius: 4px;
     outline: none;
-    accent-color: var(--active-green);
+    accent-color: var(--primary-blue);
     cursor: pointer;
 }
 
 .time-display {
     font-size: 12px;
     font-weight: bold;
-    color: var(--active-green);
+    color: var(--active-cyan);
     white-space: nowrap;
     min-width: 100px;
     text-align: right;
@@ -197,8 +235,8 @@ body {
 .controls { display: flex; gap: 10px; flex: 1.5; }
 
 .btn.icon-btn {
-    background: linear-gradient(to bottom, #555, #333);
-    border: 1px solid #222;
+    background: linear-gradient(to bottom, #334155, #1e293b);
+    border: 1px solid #0f172a;
     border-radius: 6px;
     cursor: pointer;
     box-shadow: 0 3px 0 var(--panel-black);
@@ -206,29 +244,26 @@ body {
     justify-content: center;
     align-items: center;
     flex: 1;
-    height: 42px; /* 增加高度以更好匹配放大的图标 */
+    height: 42px;
     transition: background 0.15s ease, transform 0.1s ease;
 }
 
-/* 放大 播放、暂停、上一首、下一首 图标 */
 .btn.icon-btn svg { width: 24px; height: 24px; fill: #fff; pointer-events: none; }
 
 .btn.icon-btn:active, .btn.icon-btn.active {
     box-shadow: 0 1px 0 var(--panel-black);
     transform: translateY(2px);
-    background: linear-gradient(to bottom, var(--primary-red), #c0392b);
+    background: linear-gradient(to bottom, var(--primary-blue), var(--primary-hover));
 }
 
 .volume-container { display: flex; align-items: center; gap: 10px; flex: 1; }
 .vol-btn { background: none; border: none; cursor: pointer; display: flex; }
-
-/* 放大 音量/静音 图标 */
 .vol-btn svg { width: 26px; height: 26px; fill: var(--text-gray); transition: fill 0.2s; pointer-events: none; }
-.vol-btn:hover svg { fill: var(--primary-red); }
+.vol-btn:hover svg { fill: var(--primary-blue); }
 
-.volume-container input { width: 100%; height: 6px; accent-color: var(--primary-red); cursor: pointer; }
+.volume-container input { width: 100%; height: 6px; accent-color: var(--primary-blue); cursor: pointer; }
 
-/* 歌单列表 */
+/* 歌单列表结构 */
 .playlist-section {
     border-top: 1px dashed var(--border-gray);
     padding-top: 12px;
@@ -237,11 +272,26 @@ body {
     gap: 10px;
 }
 
-.playlist-header { display: flex; align-items: center; gap: 10px; }
-.playlist-title { font-size: 11px; color: var(--text-gray); }
+.playlist-header { display: flex; align-items: center; gap: 8px; }
 
-.add-row-btn, .delete-row-btn {
-    border: none;
+.playlist-columns-title {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-right: 34px;
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--text-gray);
+}
+
+.col-title-index { width: 24px; }
+.col-title-name { flex: 1; text-align: left; padding-left: 2px; }
+.col-title-link { flex: 2; text-align: left; padding-left: 2px; }
+
+.add-row-btn {
+    background-color: #0369a1;
+    border: 1px solid var(--primary-blue);
     border-radius: 4px;
     font-weight: bold;
     cursor: pointer;
@@ -249,33 +299,68 @@ body {
     justify-content: center;
     align-items: center;
     color: #fff;
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+.add-row-btn:hover { background-color: var(--primary-blue); box-shadow: 0 0 8px rgba(22, 173, 248, 0.4); }
+
+.delete-row-btn {
+    background-color: #1e293b;
+    border: 1px solid var(--border-gray);
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-gray);
+    width: 26px;
+    height: 26px;
+    font-size: 16px;
+    transition: all 0.2s ease;
 }
 
-.add-row-btn { background-color: #27ae60; width: 24px; height: 24px; font-size: 16px; }
-.add-row-btn:hover { background-color: #219150; }
+.delete-row-btn:hover {
+    background-color: #334155;
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 6px rgba(22, 173, 248, 0.3);
+}
 
-.delete-row-btn { background-color: #c0392b; width: 24px; height: 24px; font-size: 14px; }
-.delete-row-btn:hover { background-color: var(--primary-red); }
-
+/* 列表内部滚动条与新增逻辑 */
 .track-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 252px;
+    max-height: 210px;
     overflow-y: auto;
     padding-right: 6px;
+    -webkit-overflow-scrolling: touch;
 }
 
 .track-list::-webkit-scrollbar { width: 6px; }
-.track-list::-webkit-scrollbar-track { background: #151515; border-radius: 4px; }
+.track-list::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
 .track-list::-webkit-scrollbar-thumb { background: var(--border-gray); border-radius: 4px; }
 
 .track-row { display: flex; gap: 8px; align-items: center; }
-.track-row.fade-in { animation: fadeInRow 0.35s ease-out forwards; }
+
+/* 静止淡入，防止动画抖动 */
+.track-row.fade-in { animation: fadeInRow 0.15s ease-out forwards; }
 
 @keyframes fadeInRow {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.track-index {
+    width: 24px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--primary-blue);
+    flex-shrink: 0;
 }
 
 .track-row input {
@@ -288,11 +373,67 @@ body {
     user-select: text !important;
 }
 
-.track-row input:focus { outline: none; border-color: var(--primary-red); }
+.track-row input:focus { outline: none; border-color: var(--primary-blue); }
 .input-title { flex: 1; }
 .input-url { flex: 2; }
 
 .track-row.active-track input {
-    border-color: var(--active-green);
-    background-color: #183318;
+    border-color: var(--primary-blue);
+    background-color: #0c4a6e;
+}
+
+/* ==========================================================================
+   📱 移动端适配
+   ========================================================================== */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+    body {
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .viewport-wrapper {
+        width: 100vh;
+        height: 100vw;
+        transform: rotate(90deg);
+        transform-origin: center center;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
+
+    .cassette-player {
+        margin-top: 15px;
+        width: 92vh;
+        max-width: 100vh;
+        padding: 12px 16px;
+        gap: 8px;
+        border-width: 3px;
+    }
+
+    .cassette-window { height: 130px; }
+    .cassette { width: 340px; height: 105px; padding: 0 18px; }
+    .tape-reel { width: 60px; height: 60px; }
+    .tape-reel::before { width: 30px; height: 30px; }
+    .tape-reel::after { width: 18px; height: 18px; }
+    .tape-center-window { width: 120px; height: 36px; }
+
+    .track-list { max-height: 120px; }
+    .btn.icon-btn { height: 36px; }
+}
+
+@media screen and (max-width: 900px) and (orientation: landscape) {
+    .cassette-player {
+        margin-top: 10px;
+        width: 96vw;
+        padding: 10px 16px;
+        gap: 8px;
+    }
+
+    .cassette-window { height: 120px; }
+    .cassette { width: 320px; height: 100px; padding: 0 16px; }
+    .tape-reel { width: 56px; height: 56px; }
+    .tape-reel::before { width: 28px; height: 28px; }
+    .tape-reel::after { width: 16px; height: 16px; }
+
+    .track-list { max-height: 100px; }
 }

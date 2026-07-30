@@ -35,46 +35,63 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${mins}:${secs}`;
     };
 
-    // 状态函数 1: 绝对控制 播放/暂停 互斥显隐
+    // 设置播放/暂停 UI 状态
     function setPlayState(isPlaying) {
         leftReel.classList.toggle('spinning', isPlaying);
         rightReel.classList.toggle('spinning', isPlaying);
-        
-        // 播放时只展示暂停图标，暂停时只展示播放图标
         iconPlay.style.display = isPlaying ? 'none' : 'block';
         iconPause.style.display = isPlaying ? 'block' : 'none';
-        
         playPauseBtn.classList.toggle('active', isPlaying);
         brandLogoText.classList.toggle('playing-glow', isPlaying);
     }
 
-    // 状态函数 2: 绝对控制 静音/正常音量 互斥显隐
+    audio.addEventListener('play', () => setPlayState(true));
+    audio.addEventListener('pause', () => setPlayState(false));
+
     function setMuteState(isMuted) {
         audio.muted = isMuted;
         iconVolOn.style.display = isMuted ? 'none' : 'block';
         iconVolMute.style.display = isMuted ? 'block' : 'none';
     }
 
-    // 初始化默认歌曲
-    const defaultTrackName = 'Håll Om Mig - Nanne Grönvall.mp3';
-    createTrackRow(defaultTrackName, BASE_URL + defaultTrackName);
+    // 更新列表行的数字序号
+    function updateIndexes() {
+        const rows = trackList.querySelectorAll('.track-row');
+        rows.forEach((row, idx) => {
+            const indexSpan = row.querySelector('.track-index');
+            if (indexSpan) indexSpan.textContent = idx + 1;
+        });
+    }
+
+    // 初始化 5 首曲目（前两首填入初始值，后三首空槽等待填入）
+    const initialTracks = [
+        'Canon.mp3',
+        'The Ardent Sky.m4a',
+        '',
+        '',
+        ''
+    ];
+
+    initialTracks.forEach(title => {
+        const url = title ? BASE_URL + title : BASE_URL;
+        createTrackRow(title, url, false);
+    });
 
     bgmGenBtn.addEventListener('click', () => alert('生成背景音乐外链功能提示框'));
 
-    // 一次性添加 3 栏
+    // 点击 + 按钮添加一行（无限制添加）
     addFieldsBtn.addEventListener('click', () => {
-        for (let i = 0; i < 3; i++) {
-            setTimeout(() => createTrackRow('', BASE_URL, true), i * 60);
-        }
+        createTrackRow('', BASE_URL, true);
     });
 
-    // 创建行模板
+    // 创建新行元素
     function createTrackRow(title = '', url = BASE_URL, animate = false) {
         const row = document.createElement('div');
         row.className = `track-row${animate ? ' fade-in' : ''}`;
 
         row.innerHTML = `
-            <input type="text" class="input-title" placeholder="歌名 (例: 1945.m4a)" value="${title}">
+            <span class="track-index"></span>
+            <input type="text" class="input-title" placeholder="Glory to Hong Kong.mp3" value="${title}">
             <input type="text" class="input-url" placeholder="音频直链 URL" value="${url || BASE_URL}">
             <button class="delete-row-btn" title="删除此栏">×</button>
         `;
@@ -86,38 +103,39 @@ document.addEventListener('DOMContentLoaded', () => {
         titleInput.addEventListener('input', () => {
             const val = titleInput.value.trim();
             urlInput.value = val ? (/^https?:\/\//i.test(val) ? val : BASE_URL + val) : BASE_URL;
+            setActiveRow(row);
         });
 
         deleteBtn.addEventListener('click', () => {
+            if (trackList.querySelectorAll('.track-row').length <= 1) {
+                alert('播放列表只剩一首歌曲，无法删除！');
+                return;
+            }
+
             if (row === currentActiveRow) {
                 audio.pause();
                 audio.src = '';
-                setPlayState(false);
                 updateTapeLabel('无磁带');
                 timeDisplay.textContent = '00:00 / 00:00';
                 currentActiveRow = null;
             }
             row.style.opacity = '0';
-            row.style.transform = 'translateY(-10px)';
-            setTimeout(() => row.remove(), 200);
+            setTimeout(() => {
+                row.remove();
+                updateIndexes();
+            }, 150);
         });
 
-        const handleSelectTrack = () => {
-            const currentTitle = titleInput.value.trim() || '未命名磁带';
-            const currentUrl = urlInput.value.trim();
-
-            if (currentActiveRow === row && audio.src === currentUrl && currentUrl !== '') return;
-
-            if (currentUrl) {
-                setActiveRow(row);
-                loadAndPlaySong(currentTitle, currentUrl);
-            }
-        };
-
+        const handleSelectTrack = () => setActiveRow(row);
         titleInput.addEventListener('focus', handleSelectTrack);
-        urlInput.addEventListener('change', handleSelectTrack);
+        urlInput.addEventListener('focus', handleSelectTrack);
 
         trackList.appendChild(row);
+        updateIndexes();
+
+        if (animate) {
+            trackList.scrollTop = trackList.scrollHeight;
+        }
     }
 
     function updateTapeLabel(text) {
@@ -135,38 +153,39 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTapeLabel(title);
         audio.src = url;
         audio.load();
-        audio.play().then(() => setPlayState(true)).catch(err => {
+        audio.play().catch(err => {
             console.error("播放失败:", err);
             updateTapeLabel('加载失败');
-            setPlayState(false);
         });
     }
 
-    // 播放 / 暂停 按钮事件触发
+    // 播放 / 暂停 逻辑
     playPauseBtn.addEventListener('click', () => {
         if (audio.paused) {
-            if (!audio.src) {
-                const firstRow = trackList.querySelector('.track-row');
-                if (firstRow) {
-                    const title = firstRow.querySelector('.input-title').value || '未命名磁带';
-                    const url = firstRow.querySelector('.input-url').value;
-                    if (url) {
-                        setActiveRow(firstRow);
-                        loadAndPlaySong(title, url);
-                        return;
-                    }
+            const targetRow = currentActiveRow || trackList.querySelector('.track-row');
+            if (targetRow) {
+                const title = targetRow.querySelector('.input-title').value.trim() || '未命名磁带';
+                const url = targetRow.querySelector('.input-url').value.trim();
+                
+                if (audio.src !== url) {
+                    setActiveRow(targetRow);
+                    loadAndPlaySong(title, url);
+                    return;
                 }
-                alert('请先输入有效的音频外链 URL！');
+            }
+
+            if (!audio.src) {
+                alert('请先输入有效的音频外链！');
                 return;
             }
-            audio.play().then(() => setPlayState(true)).catch(console.error);
+
+            audio.play().catch(console.error);
         } else {
             audio.pause();
-            setPlayState(false);
         }
     });
 
-    // 静音 / 恢复 按钮事件触发
+    // 静音逻辑
     muteBtn.addEventListener('click', () => {
         const isMutedNow = !(audio.muted || audio.volume === 0);
         if (isMutedNow) {
@@ -180,7 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setMuteState(isMutedNow);
     });
 
-    // 音量条拖拽监听
     volumeSlider.addEventListener('input', e => {
         const val = parseFloat(e.target.value);
         audio.volume = val;
@@ -188,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setMuteState(val === 0);
     });
 
-    // 切歌方法
+    // 上一首 / 下一首
     const switchTrack = isNext => {
         const rows = Array.from(trackList.querySelectorAll('.track-row'));
         if (!rows.length) return;
@@ -196,8 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
         index = isNext ? (index < rows.length - 1 ? index + 1 : 0) : (index > 0 ? index - 1 : rows.length - 1);
         
         const targetRow = rows[index];
-        const title = targetRow.querySelector('.input-title').value || '未命名磁带';
-        const url = targetRow.querySelector('.input-url').value;
+        const title = targetRow.querySelector('.input-title').value.trim() || '未命名磁带';
+        const url = targetRow.querySelector('.input-url').value.trim();
         if (url) {
             setActiveRow(targetRow);
             loadAndPlaySong(title, url);
@@ -207,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     prevBtn.addEventListener('click', () => switchTrack(false));
     nextBtn.addEventListener('click', () => switchTrack(true));
 
-    // 音频播放进度监听与自动连播
+    // 时间更新与进度条
     audio.addEventListener('timeupdate', () => {
         if (audio.duration) {
             progressBar.value = (audio.currentTime / audio.duration) * 100;
@@ -226,14 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     audio.addEventListener('ended', () => {
-        setPlayState(false);
         nextBtn.click();
-    });
-
-    // 防止切标签页被暂停重置
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && !audio.paused) {
-            setPlayState(true);
-        }
     });
 });
