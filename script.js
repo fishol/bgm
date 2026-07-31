@@ -1,7 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    /* ==========================
-       1. 获取页面中的核心 DOM 节点
-       ========================== */
     const audio = document.getElementById('audioPlayer');
     const playPauseBtn = document.getElementById('playPauseBtn');
     const prevBtn = document.getElementById('prevBtn');
@@ -10,13 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const volumeSlider = document.getElementById('volumeSlider');
     const progressBar = document.getElementById('progressBar');
     const timeDisplay = document.getElementById('timeDisplay');
-    const leftReel = document.getElementById('leftReel');
-    const rightReel = document.getElementById('rightReel');
-    const tapeLabel = document.getElementById('tapeLabel');
+    const progressSection = document.querySelector('.progress-section');
+    const nowPlaying = document.getElementById('nowPlaying');
     const bgmGenBtn = document.getElementById('bgmGenBtn');
     const brandLogoText = document.getElementById('brandLogoText');
     const trackList = document.getElementById('trackList');
     const addFieldsBtn = document.getElementById('addFieldsBtn');
+    const dialogOverlay = document.getElementById('dialogOverlay');
+    const dialogMessage = document.getElementById('dialogMessage');
+    const dialogCloseBtn = document.getElementById('dialogCloseBtn');
 
     const iconPlay = playPauseBtn.querySelector('.icon-play');
     const iconPause = playPauseBtn.querySelector('.icon-pause');
@@ -25,7 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const BASE_URL = 'https://fishol.github.io/music-link/';
     let currentActiveRow = null;
-    let lastVolume = 0.8;
+    let lastVolume = 0.77;
+
+    audio.volume = lastVolume;
+    if (volumeSlider) volumeSlider.value = lastVolume;
 
     const updateProgressVisual = value => {
         const percent = Math.max(0, Math.min(100, value));
@@ -33,9 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBar.value = percent;
     };
 
-    /* ==========================
-       2. 通用工具函数
-       ========================== */
+    const updateWaveform = () => {
+        if (!progressSection || !audio.duration) return;
+        const scale = 1 + 0.08 * Math.abs(Math.sin(audio.currentTime * 10));
+        progressSection.style.setProperty('--wave-scale', scale.toFixed(3));
+    };
+
     const formatTime = seconds => {
         if (isNaN(seconds) || seconds < 0) return '00:00';
         const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -44,8 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function setPlayState(isPlaying) {
-        leftReel.classList.toggle('spinning', isPlaying);
-        rightReel.classList.toggle('spinning', isPlaying);
+        if (progressSection) progressSection.classList.toggle('playing', isPlaying);
         iconPlay.style.display = isPlaying ? 'none' : 'block';
         iconPause.style.display = isPlaying ? 'block' : 'none';
         playPauseBtn.classList.toggle('active', isPlaying);
@@ -54,8 +58,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function clearPlaybackState() {
         setPlayState(false);
-        updateTapeLabel('Nothing');
+        updateNowPlaying('Nothing');
         timeDisplay.textContent = '00:00 / 00:00';
+    }
+
+    function showDialog(message) {
+        if (!dialogOverlay || !dialogMessage) return;
+        dialogMessage.textContent = message;
+        dialogOverlay.classList.remove('hidden');
+    }
+
+    function hideDialog() {
+        if (!dialogOverlay) return;
+        dialogOverlay.classList.add('hidden');
+    }
+
+    // Show a dialog containing an editable textarea and a copy button.
+    function showCopyDialog(initialText) {
+        if (!dialogOverlay || !dialogMessage || !dialogCloseBtn) return;
+
+        // create textarea inside dialogMessage
+        dialogMessage.innerHTML = '';
+        const ta = document.createElement('textarea');
+        ta.id = 'dialogTextarea';
+        ta.className = 'dialog-textarea';
+        ta.value = initialText || '';
+        ta.setAttribute('wrap', 'soft');
+        dialogMessage.appendChild(ta);
+
+        // autosize function
+        const autosize = () => {
+            ta.style.height = 'auto';
+            ta.style.height = Math.min(ta.scrollHeight, window.innerHeight * 0.5) + 'px';
+        };
+        autosize();
+        ta.addEventListener('input', autosize);
+
+        // temporarily override close button to copy text
+        const originalText = dialogCloseBtn.textContent;
+        const originalOnClick = dialogCloseBtn.onclick;
+
+        dialogCloseBtn.textContent = 'Copy BGM code';
+        dialogCloseBtn.onclick = async () => {
+            try {
+                await navigator.clipboard.writeText(ta.value);
+                dialogCloseBtn.textContent = 'Copied';
+                setTimeout(() => {
+                    // restore and hide
+                    dialogCloseBtn.textContent = originalText || 'OK';
+                    dialogCloseBtn.onclick = originalOnClick || hideDialog;
+                    hideDialog();
+                }, 900);
+            } catch (err) {
+                console.error('Copy failed', err);
+                // fallback: select and prompt
+                ta.select();
+                try { document.execCommand('copy'); } catch (e) {}
+            }
+        };
+
+        dialogOverlay.classList.remove('hidden');
+        ta.focus();
+        ta.select();
     }
 
     function setMuteState(isMuted) {
@@ -72,9 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function updateTapeLabel(text) {
-        tapeLabel.textContent = text;
-        tapeLabel.classList.toggle('marquee', tapeLabel.scrollWidth > 140);
+    function updateNowPlaying(text) {
+        if (!nowPlaying) return;
+        nowPlaying.textContent = text;
+        nowPlaying.classList.toggle('marquee', nowPlaying.scrollWidth > nowPlaying.clientWidth);
     }
 
     function setActiveRow(row) {
@@ -100,7 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getTrackInfo(row) {
-        // 统一读取当前行的标题和链接，减少重复查询 DOM 的代码。
         const titleInput = row.querySelector('.input-title');
         const urlInput = row.querySelector('.input-url');
         return {
@@ -132,12 +196,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function playTrackRow(targetRow) {
-        // 选中行后直接加载并播放，避免重复编写相同的播放逻辑。
         const { title, url } = getTrackInfo(targetRow);
         if (!url) {
             setActiveRow(targetRow);
             audio.pause();
-            updateTapeLabel('Nothing');
+            updateNowPlaying('Nothing');
             return false;
         }
 
@@ -146,9 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
-    /* ==========================
-       3. 初始化初始曲目列表
-       ========================== */
     const initialTracks = ['Canon.mp3', 'The Ardent Sky.m4a', '', '', ''];
 
     initialTracks.forEach(title => {
@@ -161,10 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     removeEmptyRows();
 
-    /* ==========================
-       4. 事件绑定与播放器行为
-       ========================== */
-    bgmGenBtn.addEventListener('click', () => alert('F I S H O L'));
+    bgmGenBtn.addEventListener('click', () => showCopyDialog('FISHOL'));
 
     addFieldsBtn.addEventListener('click', () => {
         createTrackRow('', '', true);
@@ -203,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteBtn.addEventListener('click', () => {
             const totalRows = trackList.querySelectorAll('.track-row').length;
             if (totalRows <= 1) {
-                alert('The last song cannot be deleted.');
+                showDialog('The last song cannot be deleted.');
                 return;
             }
 
@@ -232,18 +289,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadAndPlaySong(title, url) {
-        updateTapeLabel(title);
+        updateNowPlaying(title);
         audio.src = url;
         audio.load();
         audio.play().catch(err => {
             console.error('Playback failed:', err);
             clearPlaybackState();
-            updateTapeLabel('Loading failed');
+            updateNowPlaying('Loading failed');
         });
     }
 
     function playCurrentTrack() {
-        // 优先使用当前激活行；若没有则使用第一行作为默认播放目标。
         const targetRow = currentActiveRow || trackList.querySelector('.track-row');
         if (!targetRow || !isPlayableRow(targetRow)) return;
 
@@ -298,7 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const currentIndex = rows.indexOf(currentActiveRow);
         const currentPlayableIndex = playableRows.indexOf(currentActiveRow);
         const startIndex = currentPlayableIndex >= 0 ? currentPlayableIndex : -1;
 
@@ -320,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isSameTrack) {
             audio.pause();
-            updateTapeLabel(title || 'Nothing');
+            updateNowPlaying(title || 'Nothing');
             return;
         }
 
@@ -330,15 +385,13 @@ document.addEventListener('DOMContentLoaded', () => {
     prevBtn.addEventListener('click', () => switchTrack(false));
     nextBtn.addEventListener('click', () => switchTrack(true));
 
-    audio.addEventListener('play', () => setPlayState(true));
-    audio.addEventListener('pause', () => setPlayState(false));
-
     updateProgressVisual(0);
 
     audio.addEventListener('timeupdate', () => {
         if (audio.duration) {
             updateProgressVisual((audio.currentTime / audio.duration) * 100);
             timeDisplay.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+            updateWaveform();
         }
     });
 
@@ -352,6 +405,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const percent = parseFloat(e.target.value);
         updateProgressVisual(percent);
         if (audio.duration) audio.currentTime = (percent / 100) * audio.duration;
+    });
+
+    if (dialogCloseBtn) dialogCloseBtn.addEventListener('click', hideDialog);
+    if (dialogOverlay) dialogOverlay.addEventListener('click', e => {
+        if (e.target === dialogOverlay) hideDialog();
+    });
+
+    audio.addEventListener('play', () => {
+        setPlayState(true);
+        updateWaveform();
+    });
+
+    audio.addEventListener('pause', () => {
+        setPlayState(false);
+        if (progressSection) progressSection.style.setProperty('--wave-scale', '1');
     });
 
     audio.addEventListener('ended', () => {
