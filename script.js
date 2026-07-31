@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const BASE_URL = 'https://fishol.github.io/music-link/';
     let currentActiveRow = null;
     let lastVolume = 0.77;
+    let draggedRow = null;
 
     audio.volume = lastVolume;
     if (volumeSlider) volumeSlider.value = lastVolume;
@@ -136,6 +137,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function moveTrackRow(fromRow, toRow) {
+        if (!fromRow || !toRow || fromRow === toRow) return;
+
+        const rows = Array.from(trackList.querySelectorAll('.track-row'));
+        const fromIndex = rows.indexOf(fromRow);
+        const toIndex = rows.indexOf(toRow);
+
+        if (fromIndex === -1 || toIndex === -1) return;
+
+        if (fromIndex < toIndex) {
+            trackList.insertBefore(fromRow, toRow.nextSibling);
+        } else {
+            trackList.insertBefore(fromRow, toRow);
+        }
+
+        updateIndexes();
+    }
+
     function updateNowPlaying(text) {
         if (!nowPlaying) return;
         nowPlaying.textContent = text;
@@ -230,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function createTrackRow(title = '', url = '', animate = false) {
         const row = document.createElement('div');
         row.className = `track-row${animate ? ' fade-in' : ''}`;
+        row.draggable = true;
 
         row.innerHTML = `
             <span class="track-index"></span>
@@ -279,6 +299,42 @@ document.addEventListener('DOMContentLoaded', () => {
         const handleSelectTrack = () => setActiveRow(row);
         titleInput.addEventListener('focus', handleSelectTrack);
         urlInput.addEventListener('focus', handleSelectTrack);
+
+        row.addEventListener('dragstart', event => {
+            draggedRow = row;
+            row.classList.add('dragging');
+            if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', 'move');
+            }
+        });
+
+        row.addEventListener('dragover', event => {
+            event.preventDefault();
+            if (draggedRow && draggedRow !== row) {
+                row.classList.add('drag-over');
+            }
+        });
+
+        row.addEventListener('dragleave', () => {
+            row.classList.remove('drag-over');
+        });
+
+        row.addEventListener('drop', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            row.classList.remove('drag-over');
+            if (draggedRow && draggedRow !== row) {
+                moveTrackRow(draggedRow, row);
+            }
+            draggedRow = null;
+        });
+
+        row.addEventListener('dragend', () => {
+            draggedRow = null;
+            row.classList.remove('dragging');
+            row.classList.remove('drag-over');
+        });
 
         trackList.appendChild(row);
         updateIndexes();
