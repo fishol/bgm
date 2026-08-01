@@ -30,7 +30,7 @@ html, body {
     width: 100%;
     min-height: 100vh;
     background-color: var(--dark-bg);
-    background-image: url('./image/background.png');
+    background-image: url('./image/background.jpg');
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
@@ -61,6 +61,7 @@ body {
     border: 5px solid var(--border-gray);
     border-radius: 20px;
     width: auto;
+    height: 540px;
     min-width: 840px;
     max-width: 96vw;
     padding: 28px 34px;
@@ -286,19 +287,25 @@ body {
 
 .playlist-section {
     border-top: 1px dashed var(--border-gray);
-    padding-top: 12px;
+    padding-top: 15px;
     display: flex;
     flex-direction: column;
+    height: 100%;
     gap: 10px;
 }
 
-.playlist-header { display: flex; align-items: center; gap: 8px; }
+.playlist-header { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    margin-bottom: 10px;
+}
 
 .playlist-columns-title {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
     padding-right: 34px;
     font-size: 13px;
     font-weight: bold;
@@ -329,9 +336,10 @@ body {
     justify-content: center;
     align-items: center;
     color: #fff;
-    width: 24px;
-    height: 24px;
-    font-size: 16px;
+    width: 30px;
+    height: 30px;
+    margin-left: 5px;
+    font-size: 18px;
     transition: all 0.2s ease;
 }
 .add-row-btn:hover { background-color: var(--primary-blue); box-shadow: 0 0 8px rgba(22, 173, 248, 0.4); }
@@ -346,9 +354,9 @@ body {
     justify-content: center;
     align-items: center;
     color: var(--text-gray);
-    width: 26px;
-    height: 26px;
-    font-size: 16px;
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
     transition: all 0.2s ease;
 }
 
@@ -363,7 +371,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 210px;
+    height: 240px;
     overflow-y: auto;
     padding-right: 6px;
     -webkit-overflow-scrolling: touch;
@@ -373,7 +381,13 @@ body {
 .track-list::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
 .track-list::-webkit-scrollbar-thumb { background: var(--border-gray); border-radius: 4px; }
 
-.track-row { display: flex; gap: 8px; align-items: center; cursor: grab; }
+.track-row { 
+    display: flex; 
+    gap: 10px;
+    margin: 5px; 
+    align-items: center; 
+    cursor: grab; 
+}
 
 .track-row.dragging {
     opacity: 0.6;
@@ -394,12 +408,14 @@ body {
 }
 
 .track-index {
-    width: 24px;
+    width: 30px;
+    height: 30px;
     text-align: center;
-    font-size: 13px;
+    font-size: 28px;
     font-weight: bold;
     color: var(--primary-blue);
     flex-shrink: 0;
+    margin-right: 8px;
 }
 
 .track-row input {
