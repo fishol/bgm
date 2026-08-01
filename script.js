@@ -9,13 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const timeDisplay = document.getElementById('timeDisplay');
     const progressSection = document.querySelector('.progress-section');
     const nowPlaying = document.getElementById('nowPlaying');
-    const bgmGenBtn = document.getElementById('bgmGenBtn');
     const brandLogoText = document.getElementById('brandLogoText');
     const trackList = document.getElementById('trackList');
     const addFieldsBtn = document.getElementById('addFieldsBtn');
-    const dialogOverlay = document.getElementById('dialogOverlay');
-    const dialogMessage = document.getElementById('dialogMessage');
-    const dialogCloseBtn = document.getElementById('dialogCloseBtn');
 
     const iconPlay = playPauseBtn.querySelector('.icon-play');
     const iconPause = playPauseBtn.querySelector('.icon-pause');
@@ -61,66 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setPlayState(false);
         updateNowPlaying('Nothing');
         timeDisplay.textContent = '00:00 / 00:00';
-    }
-
-    function showDialog(message) {
-        if (!dialogOverlay || !dialogMessage) return;
-        dialogMessage.textContent = message;
-        dialogOverlay.classList.remove('hidden');
-    }
-
-    function hideDialog() {
-        if (!dialogOverlay) return;
-        dialogOverlay.classList.add('hidden');
-    }
-
-    // Show a dialog containing an editable textarea and a copy button.
-    function showCopyDialog(initialText) {
-        if (!dialogOverlay || !dialogMessage || !dialogCloseBtn) return;
-
-        // create textarea inside dialogMessage
-        dialogMessage.innerHTML = '';
-        const ta = document.createElement('textarea');
-        ta.id = 'dialogTextarea';
-        ta.className = 'dialog-textarea';
-        ta.value = initialText || '';
-        ta.setAttribute('wrap', 'soft');
-        dialogMessage.appendChild(ta);
-
-        // autosize function
-        const autosize = () => {
-            ta.style.height = 'auto';
-            ta.style.height = Math.min(ta.scrollHeight, window.innerHeight * 0.5) + 'px';
-        };
-        autosize();
-        ta.addEventListener('input', autosize);
-
-        // temporarily override close button to copy text
-        const originalText = dialogCloseBtn.textContent;
-        const originalOnClick = dialogCloseBtn.onclick;
-
-        dialogCloseBtn.textContent = 'Copy BGM code';
-        dialogCloseBtn.onclick = async () => {
-            try {
-                await navigator.clipboard.writeText(ta.value);
-                dialogCloseBtn.textContent = 'Copied';
-                setTimeout(() => {
-                    // restore and hide
-                    dialogCloseBtn.textContent = originalText || 'OK';
-                    dialogCloseBtn.onclick = originalOnClick || hideDialog;
-                    hideDialog();
-                }, 900);
-            } catch (err) {
-                console.error('Copy failed', err);
-                // fallback: select and prompt
-                ta.select();
-                try { document.execCommand('copy'); } catch (e) {}
-            }
-        };
-
-        dialogOverlay.classList.remove('hidden');
-        ta.focus();
-        ta.select();
     }
 
     function setMuteState(isMuted) {
@@ -240,8 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     removeEmptyRows();
 
-    bgmGenBtn.addEventListener('click', () => showCopyDialog('FISHOL'));
-
     addFieldsBtn.addEventListener('click', () => {
         createTrackRow('', '', true);
     });
@@ -280,7 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteBtn.addEventListener('click', () => {
             const totalRows = trackList.querySelectorAll('.track-row').length;
             if (totalRows <= 1) {
-                showDialog('The last song cannot be deleted.');
                 return;
             }
 
@@ -461,11 +394,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const percent = parseFloat(e.target.value);
         updateProgressVisual(percent);
         if (audio.duration) audio.currentTime = (percent / 100) * audio.duration;
-    });
-
-    if (dialogCloseBtn) dialogCloseBtn.addEventListener('click', hideDialog);
-    if (dialogOverlay) dialogOverlay.addEventListener('click', e => {
-        if (e.target === dialogOverlay) hideDialog();
     });
 
     audio.addEventListener('play', () => {

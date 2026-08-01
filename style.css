@@ -103,6 +103,15 @@ body {
     color: #fff;
 }
 
+.embed-code-label {
+    margin-left: auto;
+    color: var(--primary-blue);
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
 .now-playing.marquee {
     display: inline-block;
     padding-left: 100%;
@@ -130,73 +139,6 @@ body {
 @keyframes rainbow-glow {
     0% { background-position: 0% center; }
     100% { background-position: 200% center; }
-}
-
-.model {
-    cursor: pointer;
-    transition: color 0.2s ease;
-}
-.model:hover {
-    color: var(--primary-blue);
-}
-
-.dialog-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.75);
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.dialog-overlay.hidden {
-    display: none;
-}
-
-.dialog-box {
-    width: min(90vw, 420px);
-    background: rgba(15, 23, 42, 0.96);
-    border: 1px solid rgba(148, 163, 184, 0.24);
-    border-radius: 18px;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-    padding: 24px;
-    text-align: center;
-}
-
-.dialog-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 14px;
-}
-
-.dialog-message {
-    font-size: 14px;
-    color: #cbd5e1;
-    line-height: 1.6;
-    margin-bottom: 18px;
-    word-break: break-word;
-}
-
-.dialog-actions {
-    display: flex;
-    justify-content: center;
-}
-
-.dialog-btn {
-    background: linear-gradient(135deg, #16adf8, #0284c7);
-    color: #fff;
-    border: none;
-    border-radius: 999px;
-    padding: 10px 22px;
-    font-size: 14px;
-    cursor: pointer;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
-}
-
-.dialog-btn:hover {
-    background: linear-gradient(135deg, #00e5ff, #0ea5e9);
 }
 
 .player-body { display: flex; flex-direction: column; gap: 18px; }
