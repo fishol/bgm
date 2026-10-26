@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
-    const initialTracks = ['Canon.mp3', 'The Ardent Sky.m4a', '', '', ''];
+    const initialTracks = ['Canon_1.mp3', 'Canon_2.mp3', 'Canon_3.mp3', '', ''];
 
     initialTracks.forEach(title => {
         if (title) {
